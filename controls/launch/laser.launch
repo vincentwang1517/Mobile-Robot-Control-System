@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="controls" type="scan.py" name="scan_values" output="screen">
+        
+    </node>
+</launch>

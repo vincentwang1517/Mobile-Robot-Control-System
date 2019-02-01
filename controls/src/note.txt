@@ -1,0 +1,2 @@
+
+(1) rospy.Subscriber: After subscribing, the callback function would be called whenever the data comes in.
