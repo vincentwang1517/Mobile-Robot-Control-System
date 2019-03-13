@@ -24,63 +24,65 @@ move_vel_thread.start();
 def job(sock_name):	# job for thread
 	##### Create Server #####
 	if sock_name == 'laser':
-		sock_laser = vin_tcpip.ServerInitialization( port=1024, mode='laser');
-	elif sock_name == 'enc':
-		sock_enc = vin_tcpip.ServerInitialization( port=1025, mode='enc');
-	elif sock_name == 'vel':
-		sock_vel = vin_tcpip.ServerInitialization( port=1026, mode='vel');
-	
-	while True:
-		# connect to a client
-		if sock_name == 'laser': csock, address = sock_laser.accept();
-		elif sock_name == 'enc': csock, address = sock_enc.accept();
-		elif sock_name == 'vel': csock, address = sock_vel.accept();
-		print ('Client info: ', csock, address)
-
-		# while -> keep receiving the message
+		sock_laser = vin_tcpip.ServerInitialization( port=8001, mode='laser');
 		while True:
-			cl_msg = csock.recv(1024);
-			cl_msg = cl_msg.rstrip(' \t\r\n\0');
-			cmsg = cl_msg.split();
+			csock, address = sock_laser.accept();
+			while True:
+				cl_msg = csock.recv(1024);
+				cl_msg = cl_msg.rstrip(' \t\r\n\0');
+				cmsg = cl_msg.split();
+				if cmsg[0] == 'las':
+					message = myrostools.manage_laserdata('0~180', 5);
+					csock.send(message);
+					message = myrostools.manage_laserdata('540~720', 5);
+					csock.send(message);
 
-			if cmsg[0] == 'las':
-				message = myrostools.manage_laserdata('0~180', 5);
-				csock.send(message);
-				message = myrostools.manage_laserdata('540~720', 5);
-				csock.send(message);
-				# print 'Send laser data';
+	elif sock_name == 'enc':
+		sock_enc = vin_tcpip.ServerInitialization( port=8002, mode='enc');
+		while True:
+			csock, address = sock_enc.accept();
+			while True:
+				cl_msg = csock.recv(1024);
+				cl_msg = cl_msg.rstrip(' \t\r\n\0');
+				cmsg = cl_msg.split();
+				if cmsg[0] == 'enc':
+					message_enc = 'enc ';
+					message_enc += (str(myrostools.Rencoder) + ' ' + str(myrostools.Lencoder));
+					csock.send(message_enc);
 
-			elif cmsg[0] == 'enc':
-				message_enc = 'enc ';
-				message_enc += (str(myrostools.Rencoder) + ' ' + str(myrostools.Lencoder));
-				# print 'Encoder: ', message_enc
-				csock.send(message_enc);
+	elif sock_name == 'vel':
+		sock_vel = vin_tcpip.ServerInitialization( port=8003, mode='vel');
+		while True:
+			csock, address = sock_vel.accept();
+			while True:
+				cl_msg = csock.recv(1024);
+				cl_msg = cl_msg.rstrip(' \t\r\n\0');
+				cmsg = cl_msg.split();
+				if cmsg[0] == 'vel':
+					# data type: [vel x y th speed angular_speed]
+					try:	
+						global move_vel_thread;
+						move_vel_thread.pause();
+						speed = float(cmsg[4]);
+						turn = float(cmsg[5])
+						myrostools.twist.linear.x = float(cmsg[1]) * speed;
+						myrostools.twist.linear.y = float(cmsg[2]) * speed;
+						myrostools.twist.linear.z = 0;
+						myrostools.twist.angular.x = 0;
+						myrostools.twist.angular.y = 0;
+						myrostools.twist.angular.z = float(cmsg[3]) * turn;
+						print 'moving...'
+						move_vel_thread.resume();
+					except Exception as e:
+						print e;
 
-			elif cmsg[0] == 'vel':
-				# data type: [vel x y th speed angular_speed]
-				try:	
-					global move_vel_thread;
+				elif cmsg[0] == 'stop':
+					twist1 = Twist();
+					print 'stop!!'
 					move_vel_thread.pause();
-					speed = float(cmsg[4]);
-					turn = float(cmsg[5])
-					myrostools.twist.linear.x = float(cmsg[1]) * speed;
-					myrostools.twist.linear.y = float(cmsg[2]) * speed;
-					myrostools.twist.linear.z = 0;
-					myrostools.twist.angular.x = 0;
-					myrostools.twist.angular.y = 0;
-					myrostools.twist.angular.z = float(cmsg[3]) * turn;
-					print 'moving...'
-					move_vel_thread.resume();
-				except Exception as e:
-					print e;
-
-			elif cmsg[0] == 'stop':
-				twist1 = Twist();
-				print 'stop!!'
-				move_vel_thread.pause();
-				pub_vel.publish(twist1);
-				break;
-		#break;
+					pub_vel.publish(twist1);
+	else:
+		raise ValueError('Invalid TCPIP mode name.')
 
 server_laser = threading.Thread( target=job, args=('laser', ));
 server_enc = threading.Thread( target=job, args=('enc', ));
