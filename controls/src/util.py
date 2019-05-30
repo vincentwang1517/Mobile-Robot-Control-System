@@ -15,11 +15,14 @@ class DataManager(object):
 	def lencoder(self):
 		return self._lencoder
 
+	@property
 	def laserdata(self, new_laserdata):
 		self._laserdata = new_laserdata
 
+	@property
 	def rencoder(self, new_rencoder):
 		self._rencoder = new_rencoder
 
+	@property
 	def lencoder(self, new_lencoder):
 		self._lencoder = new_lencoder
