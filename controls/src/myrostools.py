@@ -1,31 +1,31 @@
 #! /usr/bin/env python
 import threading, rospy, string, sys
-from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Int16
-from geometry_msgs.msg import Twist
-from inspect import currentframe, getframeinfo
+from sensor_msgs.msg 	import LaserScan
+from std_msgs.msg 		import Int16
+from geometry_msgs.msg 	import Twist
+from inspect 			import currentframe, getframeinfo
+
+import util
+
+datamanager = util.DataManager()
 
 ##### initialization #####
-laser_data = [];
-Rencoder = 0;
-Lencoder = 0;
 twist = Twist();  # The data type of velocity command (Google 'ros Twist').
 frameinfo = getframeinfo(currentframe());
 
 ##### Callbacl function for Subscribers ######
 def callback_laser(msg):
-	global laser_data;
-	laser_data = msg.ranges;
+	datamanager.laser_data = msg.ranges;
 
 def callback_Rencoder(msg):
-	global Rencoder;
-	Rencoder = msg.data;
+	datamanager.rencoder = msg.data;
 
 def callback_Lencoder(msg):
-	global Lencoder;
-	Lencoder = msg.data;
+	datamanager.lencoder = msg.data;
 
 def manage_laserdata(ranges, decimal):
+	laser_data = datamanager.laser_data
+
 	if ranges == '0~180':
 		message = '0~180 ';
 		for i in range(180):

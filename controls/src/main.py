@@ -2,14 +2,15 @@
 import socket, sys, threading
 import rospy
 import string
-from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Int16
+from sensor_msgs.msg 	import LaserScan
+from geometry_msgs.msg 	import Twist
+from std_msgs.msg 		import Int16
 import myrostools
 import vin_tcpip
 
 ######## Set up ROS subcribers and publushers ####### 
 rospy.init_node('scan_values')	# This node name.
+rospy.loginfo("Start running...")
 rate = rospy.Rate(10);	# For publishers.
 sub_laser = rospy.Subscriber('/scan', LaserScan, myrostools.callback_laser); 
 sub_Renc = rospy.Subscriber('/Rencoder', Int16, myrostools.callback_Rencoder);
